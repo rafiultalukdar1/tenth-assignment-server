@@ -44,6 +44,14 @@ async function run() {
             res.send(result);
         });
 
+        // single events details
+        app.get('/events/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id : id };
+            const result = await eventsCollection.findOne(query);
+            res.send(result);
+        });
+
         // Upcoming Events
         app.get('/upcoming-events', async (req, res) =>{
             const cursor = eventsCollection.find().sort({event_date: 1}).limit(9);
