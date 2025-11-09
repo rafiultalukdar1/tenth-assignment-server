@@ -29,21 +29,32 @@ async function run() {
         await client.connect();
 
         const db = client.db('tenth_assign_db');
-        const productsCollection = db.collection('products');
+        const eventsCollection = db.collection('events');
 
         // Add database related api
-        app.post('/products', async (req, res) => {
+        app.post('/events', async (req, res) => {
             const newProduct = req.body;
-            const result = await productsCollection.insertOne(newProduct);
+            const result = await eventsCollection.insertOne(newProduct);
+            res.send(result);
+        });
+
+        app.get('/events', async (req, res) => {
+            const cursor = eventsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        // Upcoming Events
+        app.get('/upcoming-events', async (req, res) =>{
+            const cursor = eventsCollection.find().sort({event_date: 1}).limit(9);
+            const result = await cursor.toArray();
             res.send(result);
         });
 
 
 
-        
-        
 
-
+        
 
 
         await client.db("admin").command({ ping: 1 });
