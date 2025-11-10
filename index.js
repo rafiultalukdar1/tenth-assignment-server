@@ -30,6 +30,7 @@ async function run() {
 
         const db = client.db('tenth_assign_db');
         const eventsCollection = db.collection('events');
+        const joinedEventsCollection = db.collection('joinedEvents');
 
         // Add database related api
         app.post('/events', async (req, res) => {
@@ -57,6 +58,31 @@ async function run() {
             const cursor = eventsCollection.find().sort({event_date: 1}).limit(9);
             const result = await cursor.toArray();
             res.send(result);
+        });
+
+        // Joint event post api
+        app.post('/join-event', async (req, res) => {
+            const { eventId, userEmail } = req.body;
+            const alreadyJoined = await joinedEventsCollection.findOne({ eventId, userEmail });
+            if (alreadyJoined) {
+                return res.status(400).json({ message: 'Already joined this event' });
+            }
+            const joinData = { eventId, userEmail, joinedAt: new Date() };
+            const result = await joinedEventsCollection.insertOne(joinData);
+            res.status(200).json({ message: 'Event joined successfully', result });
+        });
+
+        // Joint event get api
+        app.get('/joined-events', async (req, res) => {
+            const userEmail = req.query.email;
+            if (!userEmail) return res.status(400).json({ message: 'Email is required' });
+            const joinedEvents = await joinedEventsCollection.aggregate([
+                { $match: { userEmail } },
+                { $lookup: { from: 'events', localField: 'eventId', foreignField: '_id', as: 'eventDetails' } },
+                { $unwind: '$eventDetails' },
+                { $replaceRoot: { newRoot: '$eventDetails' } }
+            ]).toArray();
+            res.json(joinedEvents);
         });
 
 
