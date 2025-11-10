@@ -33,11 +33,59 @@ async function run() {
         const joinedEventsCollection = db.collection('joinedEvents');
 
         // Add database related api
+        // app.post('/events', async (req, res) => {
+        //     const newEvents = req.body;
+        //     const result = await eventsCollection.insertOne(newEvents);
+        //     res.send(result);
+        // });
+
         app.post('/events', async (req, res) => {
-            const newProduct = req.body;
-            const result = await eventsCollection.insertOne(newProduct);
-            res.send(result);
+            const {
+                thumbnail,
+                event_type,
+                title,
+                description,
+                event_details,
+                event_date,
+                location,
+                organizer_photo,
+                organizer_name,
+                organizer_email,
+                status,
+                created_at
+            } = req.body;
+            if (!title || !event_date) {
+                return res.status(400).json({ message: 'Title and event date are required' });
+            }
+            const newEvent = {
+                thumbnail,
+                event_type,
+                title,
+                description,
+                event_details,
+                event_date: new Date(event_date).toISOString(),
+                location,
+                organizer_photo,
+                organizer_name,
+                organizer_email,
+                status,
+                created_at: created_at ? new Date(created_at).toISOString() : new Date().toISOString()
+            };
+            const result = await eventsCollection.insertOne(newEvent);
+            res.status(201).json({
+                message: 'Event created successfully!',
+                acknowledged: result.acknowledged,
+                insertedId: result.insertedId
+            });
         });
+
+
+
+
+
+
+
+
 
         app.get('/events', async (req, res) => {
             const cursor = eventsCollection.find();
@@ -48,10 +96,16 @@ async function run() {
         // single events details
         app.get('/events/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id : id };
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).json({ message: 'Invalid event ID' });
+            }
+            const query = { _id: new ObjectId(id) };
             const result = await eventsCollection.findOne(query);
-            res.send(result);
+            if (!result) return res.status(404).json({ message: 'Event not found' });
+            res.json(result);
         });
+
+        
 
         // Upcoming Events
         app.get('/upcoming-events', async (req, res) =>{
@@ -63,14 +117,18 @@ async function run() {
         // Joint event post api
         app.post('/join-event', async (req, res) => {
             const { eventId, userEmail } = req.body;
-            const alreadyJoined = await joinedEventsCollection.findOne({ eventId, userEmail });
+            if (!ObjectId.isValid(eventId)) {
+                return res.status(400).json({ message: 'Invalid event ID' });
+            }
+            const alreadyJoined = await joinedEventsCollection.findOne({ eventId: new ObjectId(eventId), userEmail });
             if (alreadyJoined) {
                 return res.status(400).json({ message: 'Already joined this event' });
             }
-            const joinData = { eventId, userEmail, joinedAt: new Date() };
+            const joinData = { eventId: new ObjectId(eventId), userEmail, joinedAt: new Date() };
             const result = await joinedEventsCollection.insertOne(joinData);
             res.status(200).json({ message: 'Event joined successfully', result });
         });
+
 
         // Joint event get api
         app.get('/joined-events', async (req, res) => {
@@ -83,12 +141,17 @@ async function run() {
                 {
                 $project: {
                     joinedId: '$_id',
+                    eventId: '$eventDetails._id',
                     title: '$eventDetails.title',
                     description: '$eventDetails.description',
                     event_type: '$eventDetails.event_type',
                     thumbnail: '$eventDetails.thumbnail',
                     location: '$eventDetails.location',
                     event_date: '$eventDetails.event_date',
+                    event_details: '$eventDetails.event_details',
+                    organizer_name: '$eventDetails.organizer_name',
+                    organizer_email: '$eventDetails.organizer_email',
+                    organizer_photo: '$eventDetails.organizer_photo',
                 }
                 }
             ]).toArray();
@@ -98,12 +161,16 @@ async function run() {
         // DELETE Joined Event
         app.delete('/joined-events/:id', async (req, res) => {
             const joinedId = req.params.id;
+            if (!ObjectId.isValid(joinedId)) {
+                return res.status(400).json({ message: 'Invalid joinedId' });
+            }
             const result = await joinedEventsCollection.deleteOne({ _id: new ObjectId(joinedId) });
             if (result.deletedCount === 0) {
                 return res.status(404).json({ message: 'Event not found or already removed' });
             }
             res.json({ message: 'Successfully removed from event' });
         });
+
 
 
 
