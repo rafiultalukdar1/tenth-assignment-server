@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 3000;
 require('dotenv').config();
@@ -80,10 +80,33 @@ async function run() {
                 { $match: { userEmail } },
                 { $lookup: { from: 'events', localField: 'eventId', foreignField: '_id', as: 'eventDetails' } },
                 { $unwind: '$eventDetails' },
-                { $replaceRoot: { newRoot: '$eventDetails' } }
+                {
+                $project: {
+                    joinedId: '$_id',
+                    title: '$eventDetails.title',
+                    description: '$eventDetails.description',
+                    event_type: '$eventDetails.event_type',
+                    thumbnail: '$eventDetails.thumbnail',
+                    location: '$eventDetails.location',
+                    event_date: '$eventDetails.event_date',
+                }
+                }
             ]).toArray();
             res.json(joinedEvents);
         });
+
+        // DELETE Joined Event
+        app.delete('/joined-events/:id', async (req, res) => {
+            const joinedId = req.params.id;
+            const result = await joinedEventsCollection.deleteOne({ _id: new ObjectId(joinedId) });
+            if (result.deletedCount === 0) {
+                return res.status(404).json({ message: 'Event not found or already removed' });
+            }
+            res.json({ message: 'Successfully removed from event' });
+        });
+
+
+
 
 
 
