@@ -186,45 +186,12 @@ async function run() {
         });
 
         // Update Event
-        // app.patch('/events/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     if (!ObjectId.isValid(id)) {
-        //         return res.status(400).json({ message: 'Invalid event ID' });
-        //     }
-        //     const updatedEvent = req.body;
-        //     const query = { _id: new ObjectId(id) };
-        //     const update = {
-        //         $set: {
-        //             title: updatedEvent.title,
-        //             description: updatedEvent.description,
-        //             event_details: updatedEvent.event_details,
-        //             thumbnail: updatedEvent.thumbnail,
-        //             event_type: updatedEvent.event_type,
-        //             location: updatedEvent.location,
-        //             event_date: new Date(updatedEvent.event_date).toISOString(),
-        //             organizer_name: updatedEvent.organizer_name,
-        //             organizer_email: updatedEvent.organizer_email,
-        //             organizer_photo: updatedEvent.organizer_photo,
-        //             status: updatedEvent.status || 'upcoming'
-        //         }
-        //     };
-        //     const result = await eventsCollection.updateOne(query, update);
-        //     res.send(result);
-        // });
-
         app.patch('/events/:id', async (req, res) => {
             const id = req.params.id;
             if (!ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid event ID' });
             }
-
             const updatedEvent = req.body;
-            if (!updatedEvent.title || !updatedEvent.description || !updatedEvent.event_details || 
-                !updatedEvent.thumbnail || !updatedEvent.event_type || !updatedEvent.location || 
-                !updatedEvent.event_date) {
-                return res.status(400).json({ message: 'All fields are required' });
-            }
-
             const query = { _id: new ObjectId(id) };
             const update = {
                 $set: {
@@ -241,15 +208,9 @@ async function run() {
                     status: updatedEvent.status || 'upcoming'
                 }
             };
-
             const result = await eventsCollection.updateOne(query, update);
-            if (result.modifiedCount === 0) {
-                return res.status(400).json({ message: 'No changes made or event not found' });
-            }
-
-            res.json({ message: 'Event updated successfully', updatedCount: result.modifiedCount });
+            res.send(result);
         });
-
 
         
 
