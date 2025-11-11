@@ -212,6 +212,20 @@ async function run() {
             res.send(result);
         });
 
+        // Delete Event
+        app.delete('/events/:id', async (req, res) => {
+            const id = req.params.id;
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).json({ message: 'Invalid event ID' });
+            }
+            const result = await eventsCollection.deleteOne({ _id: new ObjectId(id) });
+            if (result.deletedCount === 0) {
+                return res.status(404).json({ message: 'Event not found or already deleted' });
+            }
+            await joinedEventsCollection.deleteMany({ eventId: new ObjectId(id) });
+            res.json({ message: 'Event deleted successfully', deletedCount: result.deletedCount });
+        });
+
         
 
 
