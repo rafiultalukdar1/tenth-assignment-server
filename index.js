@@ -177,6 +177,13 @@ async function run() {
             res.json({ message: 'Successfully removed from event' });
         });
 
+        // GET My Events
+        app.get('/my-events', async (req, res) => {
+            const userEmail = req.query.email;
+            if (!userEmail) return res.status(400).json({ message: 'Email is required' });
+            const myEvents = await eventsCollection.find({ organizer_email: userEmail }).sort({ event_date: 1 }).toArray();
+            res.json(myEvents);
+        });
 
 
 
