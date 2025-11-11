@@ -79,14 +79,6 @@ async function run() {
             });
         });
 
-
-
-
-
-
-
-
-
         app.get('/events', async (req, res) => {
             const cursor = eventsCollection.find();
             const result = await cursor.toArray();
@@ -108,11 +100,25 @@ async function run() {
         
 
         // Upcoming Events
-        app.get('/upcoming-events', async (req, res) =>{
-            const cursor = eventsCollection.find().sort({event_date: 1}).limit(9);
+        // app.get('/upcoming-events', async (req, res) =>{
+        //     const cursor = eventsCollection.find().sort({event_date: 1}).limit(9);
+        //     const result = await cursor.toArray();
+        //     res.send(result);
+        // });
+
+        // Upcoming Events
+        app.get('/upcoming-events', async (req, res) => {
+            const currentDate = new Date();
+            const cursor = eventsCollection
+                .find({ event_date: { $gte: currentDate.toISOString() } })
+                .sort({ event_date: 1 })
             const result = await cursor.toArray();
             res.send(result);
         });
+
+
+
+
 
         // Joint event post api
         app.post('/join-event', async (req, res) => {
