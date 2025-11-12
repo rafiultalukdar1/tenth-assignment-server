@@ -5,14 +5,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 require('dotenv').config();
 
-
 // middle-ware
 app.use(cors());
 app.use(express.json());
 
-
 const uri = `mongodb+srv://${process.env.BD_USER}:${process.env.DB_PASS}@cluster0.w0v9pwr.mongodb.net/?appName=Cluster0`;
-
 
 // MongoClient
 const client = new MongoClient(uri, {
@@ -23,22 +20,15 @@ const client = new MongoClient(uri, {
   }
 });
 
-
 async function run() {
     try{
-        await client.connect();
+        // await client.connect();
 
         const db = client.db('tenth_assign_db');
         const eventsCollection = db.collection('events');
         const joinedEventsCollection = db.collection('joinedEvents');
 
-        // Add database related api
-        // app.post('/events', async (req, res) => {
-        //     const newEvents = req.body;
-        //     const result = await eventsCollection.insertOne(newEvents);
-        //     res.send(result);
-        // });
-
+        // Events
         app.post('/events', async (req, res) => {
             const {
                 thumbnail,
@@ -97,25 +87,7 @@ async function run() {
             res.json(result);
         });
 
-        
-
-        // Upcoming Events
-        // app.get('/upcoming-events', async (req, res) =>{
-        //     const cursor = eventsCollection.find().sort({event_date: 1}).limit(9);
-        //     const result = await cursor.toArray();
-        //     res.send(result);
-        // });
-
-        // Upcoming Events
-        // app.get('/upcoming-events', async (req, res) => {
-        //     const currentDate = new Date();
-        //     const cursor = eventsCollection
-        //         .find({ event_date: { $gte: currentDate.toISOString() } })
-        //         .sort({ event_date: 1 })
-        //     const result = await cursor.toArray();
-        //     res.send(result);
-        // });
-
+        // Upcoming events
         app.get('/upcoming-events', async (req, res) => {
             const { type, search } = req.query;
             const currentDate = new Date();
@@ -136,10 +108,6 @@ async function run() {
             res.send(events);
         });
 
-
-
-
-
         // Joint event post api
         app.post('/join-event', async (req, res) => {
             const { eventId, userEmail } = req.body;
@@ -154,7 +122,6 @@ async function run() {
             const result = await joinedEventsCollection.insertOne(joinData);
             res.status(200).json({ message: 'Event joined successfully', result });
         });
-
 
         // Joint event get api
         app.get('/joined-events', async (req, res) => {
@@ -246,10 +213,7 @@ async function run() {
             res.json({ message: 'Event deleted successfully', deletedCount: result.deletedCount });
         });
 
-        
-
-
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     }
     finally{
