@@ -107,13 +107,33 @@ async function run() {
         // });
 
         // Upcoming Events
+        // app.get('/upcoming-events', async (req, res) => {
+        //     const currentDate = new Date();
+        //     const cursor = eventsCollection
+        //         .find({ event_date: { $gte: currentDate.toISOString() } })
+        //         .sort({ event_date: 1 })
+        //     const result = await cursor.toArray();
+        //     res.send(result);
+        // });
+
         app.get('/upcoming-events', async (req, res) => {
+            const { type, search } = req.query;
             const currentDate = new Date();
-            const cursor = eventsCollection
-                .find({ event_date: { $gte: currentDate.toISOString() } })
+            const filter = {
+                event_date: { $gte: currentDate.toISOString() },
+            };
+            if (type) {
+                filter.event_type = type;
+            }
+            if (search) {
+                filter.title = { $regex: search, $options: 'i' };
+            }
+            const events = await eventsCollection
+                .find(filter)
                 .sort({ event_date: 1 })
-            const result = await cursor.toArray();
-            res.send(result);
+                .toArray();
+
+            res.send(events);
         });
 
 
